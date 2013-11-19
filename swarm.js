@@ -4,8 +4,24 @@
  * Date: 9/26/13
  * Time: 10:49 PM
  * To change this template use File | Settings | File Templates.
- */
+
+    Copyright (c) <2013> <Sam Royston>
+
+    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+    IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+    FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+    AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+    LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+    OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+    THE SOFTWARE.
+*/
+
 var x,y;
+var SWARM_RENDERTYPE_POINT = 1;
+var SWARM_RENDERTYPE_LINE = 2;
+var SWARM_DYNAMIC_CENTROIDS = 3;
+var SWARM_UNIFORM_ASSIGNMENT = 4;
+
 var Insect = function(xloc,yloc,xvel,yvel,centroid){
 
     this.xloc = xloc;
@@ -14,6 +30,8 @@ var Insect = function(xloc,yloc,xvel,yvel,centroid){
     this.yvel = yvel;
     this.children = [];
     this.centroid = centroid;
+
+
 }
 
 Insect.prototype.spawnYouth = function(){
@@ -25,17 +43,31 @@ Insect.prototype.purgeYouth = function(){
 }
 
 
-var Swarm = function(insects,centroids,context,gravity,friction,randomness,frightfulness){
+var Swarm = function(context,centroids,insects,gravity,friction,randomness,frightfulness){
     var wid = context.canvas.width;
     var hei = context.canvas.height;
     this.state = [];
     this.saveState();
+    this.maxPerturbation = 0.7;
+    /** rendered as line by default **/
+    this.renderType = SWARM_RENDERTYPE_LINE;
+
     if(centroids){
         console.log(centroids[0]);
         this.centroids = centroids;
     }
     else{
-        this.centroids = [[0,0]];
+        this.centroids = [];
+        this.centroids.push([0.5,0.5]);
+    }
+    if(!gravity || !friction || !randomness || !frightfulness){
+        this.setToNormal();
+    }
+    else{
+        this.gravity = gravity;
+        this.friction = friction;
+        this.randomness = randomness;
+        this.frightfulness = frightfulness;
     }
     this.gridbins = [];
     for( var i = 0; i < 10; i++){
@@ -46,30 +78,31 @@ var Swarm = function(insects,centroids,context,gravity,friction,randomness,frigh
         this.gridbins.push(square);
     }
 
+    this.probabilityFunction = function(){
+
+      //** default is uniform distribution **/
+
+      return Math.random();
+    };
 
     this.gridbins.push
-    this.gravity = gravity;
-    this.friction = friction;
-    this.randomness = randomness;
+
     this.context = context;
-    //this.bugSize = 1.6;
+    this.bugSize = 2;
     this.maxPerturbDistance = 0.8;
     this.currentMode = "normal_mode";
-    if(frightfulness){
-        this.frightfulness = frightfulness;
-    }
-    else{
-        this.frightfulness = 0.0002;
-    }
+
     if(insects){
         this.insects = insects;
     }
     else{
+
         this.insects = [];
-        for(i = 0; i < 400; i++){
-            insect = new Insect(this.centroids[0][0],this.centroids[0][1],0,0,this.centroids[0])
-            this.insects.push()
+        for(var i = 0; i < 100; i++){
+            var insect = new Insect(this.centroids[0][0],this.centroids[0][1],0,0,this.centroids[0])
+            this.insects.push(insect);
         }
+        console.log("generated agents");
     }
     x = d3.scale.linear()
             .domain([0, 1])
@@ -132,13 +165,16 @@ Swarm.prototype.nextIteration = function(cursorX,cursorY){
 
     counter = 0;
 
-
-
+    if(swarm.renderType == SWARM_RENDERTYPE_LINE){
+        swarm.context.beginPath();
+    }
     swarm.insects.forEach(function(insect){
 
 
+        var prevPoint = [x(insect.xloc),y(insect.yloc)];
 
-        if (swarm.currentMode == 'camera_mode' && swarm.centroids) {
+
+        if (swarm.currentMode == SWARM_DYNAMIC_CENTROIDS && swarm.centroids) {
             insect.centroid = [10000,10000];
 
             for(k =0; k < swarm.centroids.length; k++){
@@ -151,7 +187,8 @@ Swarm.prototype.nextIteration = function(cursorX,cursorY){
                     insect.centroid = swarm.centroids[k];
                 }
             }
-        }else if (swarm.currentMode == 'normal_mode') {
+        }
+        else if (swarm.currentMode == 'normal_mode') {
             insect.centroid = swarm.centroids[0];
 
         }
@@ -160,29 +197,46 @@ Swarm.prototype.nextIteration = function(cursorX,cursorY){
 
         mag = Math.sqrt((dx*dx)+(dy*dy));
 
+        /** if cursor is right on top of insect they freak out, so correct with this **/
+
+        if(mag < 0.01){
+            mag = 0.01;
+        }
+
         insect.xloc += insect.xvel;
         insect.yloc += insect.yvel;
 
         if(mag < swarm.maxPerturbDistance){
-            insect.xvel += (1 + (0.1/mag)) * swarm.randomness * (Math.random() - 0.5) - swarm.friction * insect.xvel - mag * swarm.gravity * (insect.xloc - insect.centroid[0]) + (dx / (mag * mag)) * swarm.frightfulness;
-            insect.yvel += (1 + (0.1/mag)) * swarm.randomness * (Math.random() - 0.5) - swarm.friction * insect.yvel - mag * swarm.gravity * (insect.yloc - insect.centroid[1]) + (dy / (mag * mag)) * swarm.frightfulness;
+            insect.xvel += (1 + (0.1/mag)) * swarm.randomness * (swarm.probabilityFunction() - 0.5) - swarm.friction * insect.xvel - mag * swarm.gravity * (insect.xloc - insect.centroid[0]) + (dx / (mag * mag)) * swarm.frightfulness;
+            insect.yvel += (1 + (0.1/mag)) * swarm.randomness * (swarm.probabilityFunction() - 0.5) - swarm.friction * insect.yvel - mag * swarm.gravity * (insect.yloc - insect.centroid[1]) + (dy / (mag * mag)) * swarm.frightfulness;
         }
-        insect.xvel += swarm.randomness * (Math.random() - 0.5) - swarm.friction * insect.xvel - (swarm.gravity) * (insect.xloc-insect.centroid[0]);
-        insect.yvel += swarm.randomness * (Math.random() - 0.5) - swarm.friction * insect.yvel - (swarm.gravity) * (insect.yloc-insect.centroid[1]);
+        insect.xvel += swarm.randomness * (swarm.probabilityFunction() - 0.5) - swarm.friction * insect.xvel - (swarm.gravity) * (insect.xloc-insect.centroid[0]);
+        insect.yvel += swarm.randomness * (swarm.probabilityFunction() - 0.5) - swarm.friction * insect.yvel - (swarm.gravity) * (insect.yloc-insect.centroid[1]);
 
-        swarm.context.fillRect(x(insect.xloc),y(insect.yloc),2,2);
+
+        if(swarm.renderType == SWARM_RENDERTYPE_POINT){
+
+            swarm.context.fillRect(x(insect.xloc),y(insect.yloc),2,2);
+        }
+        else if(swarm.renderType == SWARM_RENDERTYPE_LINE){
+            swarm.context.moveTo(prevPoint[0],prevPoint[1]);
+            swarm.context.lineTo(x(insect.xloc),y(insect.yloc));
+        }
         counter ++;
 
         insect.children.forEach(function(babe){
               babe.centroid = [insect.xloc,insect.yloc];
               babe.xloc += babe.xvel;
               babe.yloc += babe.yvel;
-              babe.xvel += swarm.randomness * (Math.random() - 0.5) - swarm.friction * babe.xvel - (swarm.gravity) * (babe.xloc-babe.centroid[0]);
-              babe.yvel += swarm.randomness * (Math.random() - 0.5) - swarm.friction * babe.yvel - (swarm.gravity) * (babe.yloc-babe.centroid[1]);
+              babe.xvel += swarm.randomness * ( swarm.probabilityFunction()- 0.5) - swarm.friction * babe.xvel - (swarm.gravity) * (babe.xloc-babe.centroid[0]);
+              babe.yvel += swarm.randomness * (swarm.probabilityFunction() - 0.5) - swarm.friction * babe.yvel - (swarm.gravity) * (babe.yloc-babe.centroid[1]);
               swarm.context.fillRect(x(babe.xloc),y(babe.yloc),1,1);
         });
 
     });
+    if(swarm.renderType == SWARM_RENDERTYPE_LINE){
+        swarm.context.stroke();
+    }
 
 }
 
@@ -204,18 +258,16 @@ Swarm.prototype.setToSelectionMode = function(){
 
 Swarm.prototype.equalize = function(){
    counter = 0;
-        var swarm = this;
-        swarm.currentMode = 'assignment_mode';
-
-        swarm.centroids.sort();
-        swarm.insects.forEach(function(insect){
-
-            insect.centroid = swarm.centroids[counter%swarm.centroids.length];
-            counter++;
-        });
-
-
+    var swarm = this;
+    swarm.currentMode = SWARM_UNIFORM_ASSIGNMENT;
+    swarm.centroids.sort();
+    swarm.insects.forEach(function(insect){
+        insect.centroid = swarm.centroids[counter%swarm.centroids.length];
+        counter++;
+    });
 }
+
+
 
 Swarm.prototype.setToExcited = function(){
     this.randomness = 0.0062;
@@ -283,6 +335,30 @@ Swarm.prototype.reAssignToGrid = function(){
 
     }
 }
+
+
+
+/** returns uniform distribution **/
+
+UniformFlight = function(){
+    return Math.random();
+}
+
+/** returns approximation of normal distribution. The higher the degree, the better the approximation **/
+
+RaleighFlightApprox = function(degree){
+    var output = 0;
+    if(!degree){
+        degree = 3;
+    }
+    var i = 0;
+    while(i < degree){
+        output += Math.random()/degree;
+        i ++;
+    }
+    return output;
+}
+
 
 
 
