@@ -6,6 +6,7 @@ with added consideration for momentum as well as gravity about a certain point, 
 but can be made aware of the cursor location. Their position should be manipulated by way of setting the gravitational center(s), this way they will maintain their
 organic looking motion.
 
+Examples: http://somatostat.in/swarmSanbox.html
 
 ## Usage
 
