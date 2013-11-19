@@ -1,19 +1,28 @@
 /**
  * Created with PyCharm.
- * User: Lisa
+ * User: Sam
  * Date: 9/26/13
  * Time: 10:49 PM
  * To change this template use File | Settings | File Templates.
  */
+var x,y;
 var Insect = function(xloc,yloc,xvel,yvel,centroid){
 
     this.xloc = xloc;
     this.yloc = yloc;
     this.xvel = xvel;
     this.yvel = yvel;
+    this.children = [];
     this.centroid = centroid;
 }
 
+Insect.prototype.spawnYouth = function(){
+    this.children.push(new Insect(this.xloc,this.yloc,this.xvel,this.yvel,this.centroid));
+}
+
+Insect.prototype.purgeYouth = function(){
+    this.children = [];
+}
 
 
 var Swarm = function(insects,centroids,context,gravity,friction,randomness,frightfulness){
@@ -28,7 +37,17 @@ var Swarm = function(insects,centroids,context,gravity,friction,randomness,frigh
     else{
         this.centroids = [[0,0]];
     }
+    this.gridbins = [];
+    for( var i = 0; i < 10; i++){
+        var square = [];
+        for( var i = 0; i < 10; i++){
+            square.push([]);
+        }
+        this.gridbins.push(square);
+    }
 
+
+    this.gridbins.push
     this.gravity = gravity;
     this.friction = friction;
     this.randomness = randomness;
@@ -52,14 +71,44 @@ var Swarm = function(insects,centroids,context,gravity,friction,randomness,frigh
             this.insects.push()
         }
     }
+    x = d3.scale.linear()
+            .domain([0, 1])
+            .range([0, this.context.canvas.width]);
+
+    y = d3.scale.linear()
+        .domain([0, 1])
+        .range([0, this.context.canvas.height]);
 }
 
+Swarm.prototype.spawnYouth = function(){
+    this.insects.forEach(function(insect){
+       insect.spawnYouth();
+    });
+}
+
+Swarm.prototype.purgeYouth = function(){
+    this.insects.forEach(function(insect){
+       insect.purgeYouth();
+    });
+}
+
+Swarm.prototype.killAll = function(){
+    this.insects = [];
+}
+
+Swarm.prototype.addMember = function(){
+    this.insects.push(new Insect(0,0,0,0,this.centroids[0]));
+}
+
+Swarm.prototype.sacrificeMember = function(){
+    this.insects.pop();
+}
 
 
 Swarm.prototype.nextIteration = function(cursorX,cursorY){
     swarm = this;
 
-    if (this.currentMode == 'normal_mode' && cursorX != NaN){
+    if (this.currentMode == 'normal_mode' && cursorX != NaN && cursorY != NaN){
 
         var mag;
         var dx;
@@ -80,14 +129,16 @@ Swarm.prototype.nextIteration = function(cursorX,cursorY){
         this.centroids[0][1] -= ((this.centroids[0][1]-0.55)*5 - (dy / (mag * mag))) * f * 5;
     }
 
+
     counter = 0;
+
+
 
     swarm.insects.forEach(function(insect){
 
-        dx = insect.xloc- cursorX;
-        dy = insect.yloc- cursorY;
 
-        if (swarm.currentMode == 'camera_mode') {
+
+        if (swarm.currentMode == 'camera_mode' && swarm.centroids) {
             insect.centroid = [10000,10000];
 
             for(k =0; k < swarm.centroids.length; k++){
@@ -99,14 +150,13 @@ Swarm.prototype.nextIteration = function(cursorX,cursorY){
                 if(((da1*da1) + (da2*da2)) > ((db1*db1) + (db2*db2))){
                     insect.centroid = swarm.centroids[k];
                 }
-
             }
         }else if (swarm.currentMode == 'normal_mode') {
             insect.centroid = swarm.centroids[0];
+
         }
-        else if (swarm.currentMode == 'assignment_mode'){
-            insect.centroid = swarm.centroids[counter%swarm.centroids.length];
-        }
+        dx = insect.xloc- cursorX;
+        dy = insect.yloc- cursorY;
 
         mag = Math.sqrt((dx*dx)+(dy*dy));
 
@@ -120,18 +170,22 @@ Swarm.prototype.nextIteration = function(cursorX,cursorY){
         insect.xvel += swarm.randomness * (Math.random() - 0.5) - swarm.friction * insect.xvel - (swarm.gravity) * (insect.xloc-insect.centroid[0]);
         insect.yvel += swarm.randomness * (Math.random() - 0.5) - swarm.friction * insect.yvel - (swarm.gravity) * (insect.yloc-insect.centroid[1]);
 
-        x = d3.scale.linear()
-            .domain([0, 1])
-            .range([0, swarm.context.canvas.width]);
-
-        y = d3.scale.linear()
-            .domain([0, 1])
-            .range([0, swarm.context.canvas.height]);
-
         swarm.context.fillRect(x(insect.xloc),y(insect.yloc),2,2);
         counter ++;
+
+        insect.children.forEach(function(babe){
+              babe.centroid = [insect.xloc,insect.yloc];
+              babe.xloc += babe.xvel;
+              babe.yloc += babe.yvel;
+              babe.xvel += swarm.randomness * (Math.random() - 0.5) - swarm.friction * babe.xvel - (swarm.gravity) * (babe.xloc-babe.centroid[0]);
+              babe.yvel += swarm.randomness * (Math.random() - 0.5) - swarm.friction * babe.yvel - (swarm.gravity) * (babe.yloc-babe.centroid[1]);
+              swarm.context.fillRect(x(babe.xloc),y(babe.yloc),1,1);
+        });
+
     });
+
 }
+
 Swarm.prototype.setToNormal = function(){
     this.randomness = 0.0028;
     this.friction = 0.04;
@@ -149,34 +203,18 @@ Swarm.prototype.setToSelectionMode = function(){
 }
 
 Swarm.prototype.equalize = function(){
-    var start = 0;
-    var finish = (this.insects.length / this.centroids.length) + 1;
-        ;
-    var partition = 1;
-    var swarm = this;
-    this.centroids.forEach(function(centroid){
-        finish = finish > swarm.insects.length ? swarm.insects.length : finish;
-        for ( var i = start; i < finish; i++){
-            //if(swarm.insects[i] == undefined){
-            console.log((start))
-            console.log(finish)
-            console.log(i);
-           // /}
+   counter = 0;
+        var swarm = this;
+        swarm.currentMode = 'assignment_mode';
 
-            swarm.insects[i].centroid = centroid;
-        }
+        swarm.centroids.sort();
+        swarm.insects.forEach(function(insect){
 
-        partition ++;
-        finish = Math.round(partition * swarm.insects.length / swarm.centroids.length);
-        start = finish;
+            insect.centroid = swarm.centroids[counter%swarm.centroids.length];
+            counter++;
+        });
 
-    });
-    swarm.currentMode = 'assignment_mode';
-    console.log(swarm.currentMode);
-    setTimeout(function(){
-        swarm.currentMode = 'camera_mode';
-    },4000);
-    console.log(swarm.currentMode);
+
 }
 
 Swarm.prototype.setToExcited = function(){
@@ -191,6 +229,21 @@ Swarm.prototype.setToCameraCapture = function(){
     this.gravity = 0.05;
 }
 
+Swarm.prototype.setToWander = function(){
+    this.gravity = 0.006;
+    this.friction = 0.05;
+    this.randomness= 0.002;
+    this.frightfulness = 0.00008;
+}
+
+Swarm.prototype.setToPicture = function(){
+    this.gravity = 0.004;
+    this.friction = 0.2;
+    this.randomness= 0.001;
+    this.frightfulness = 0.00008;
+}
+
+
 Swarm.prototype.saveState = function(){
     this.state = [this.gravity,this.friction,this.randomness,this.frightfulness];
 }
@@ -202,6 +255,34 @@ Swarm.prototype.restoreState = function(){
     this.frightfulness = this.state[3];
 }
 
+Swarm.prototype.reAssignToGrid = function(){
+    this.insects.sort(function(a,b){
+        return a.xloc - b.xloc;
+    })
+    this.centroids.sort(function(a,b){
+        return a.xloc - b.xloc;
+    })
+    var insectTempCols = [];
+    var centroidTempCols = [];
+    var i;
+    var y = 0;
+    var k = 0;
+    var cols = this.gridbins[0].length;
+    var rows = this.gridbins[0][0].length;
+    var x = 0;
+
+        while(i < this.insects.count){
+           for(var x = 0; x < cols; x++){
+                if(this.insects[i].xloc < x * 1.0 / cols){
+                    insectTempCols[x].push(this.insects[i]);
+                }
+        }
+        insectTempCols.forEach(function(container){
+
+            })
+
+    }
+}
 
 
 
