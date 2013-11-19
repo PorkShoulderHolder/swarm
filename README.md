@@ -7,7 +7,7 @@ but can be made aware of the cursor location. Their position should be manipulat
 organic looking motion.
 
 
-# Usage
+## Usage
 
 
 The constructor must take a canvas context as the argument. This will produce a swarm of 100 agents (insects, gnats, call them whatever you like), with default attributes.
@@ -42,7 +42,7 @@ Depending on how you set the parameters, these guys can start to look a lot like
 
 
 
-### Advanced Usage
+## Advanced Usage
 
 The swarm is made of an array of 'insects', which are constructed like this
 
