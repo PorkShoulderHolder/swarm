@@ -69,7 +69,7 @@ Also we can make every agent have a 'child' that will follow them around, and co
     swarm.spawnYouth();
     swarm.purgeYouth();
 
-You may have noticed that the 'centroids' property is actually an array. If you populate that array, the swarm can do some cool stuff based on the locations of the centroids.
+The 'centroids' property is an array. If you populate that array, the swarm can do some cool stuff based on the locations of the centroids.
 
     swarm.centroids = [[0.3,0.3], [0.3,0.4], [0.3,0.5], [0.3,0.6],
                        [0.3,0.7], [0.4,0.7], [0.5,0.7], [0.6,0.7],
