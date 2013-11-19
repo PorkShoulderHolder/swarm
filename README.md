@@ -42,7 +42,7 @@ Depending on how you set the parameters, these guys can start to look a lot like
 
 
 
-# Advanced Usage
+### Advanced Usage
 
 The swarm is made of an array of 'insects', which are constructed like this
 
@@ -91,6 +91,6 @@ Dynamic centroid mode is computationally intensive, but it looks cool. A grid sy
 
 
 
-That's about it!
+That's it!
 
 
