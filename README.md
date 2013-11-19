@@ -1,7 +1,7 @@
 swarm.js
 ========
 
-swarm.js is a library for rendering swarm-like behaviour on an html canvas element. The system can be thought of as a set of particles subject to brownian motion
+swarm.js is a tool for rendering swarm-like behaviour on an html canvas element. The system can be thought of as a set of particles subject to brownian motion
 with added consideration for momentum as well as gravity about a certain point, or set of points. The agents (i.e. insects/gnats) comprising each swarm are not aware of each other,
 but can be made aware of the cursor location. Their position should be manipulated by way of setting the gravitational center(s), this way they will maintain their
 organic looking motion.
