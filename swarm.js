@@ -38,7 +38,10 @@ var Insect = function(xloc,yloc,xvel,yvel,centroid){
     this.xvel = xvel;
     this.yvel = yvel;
     this.children = [];
+    this.gravity = 1;
+    this.randomness = 1;
     this.centroid = centroid;
+    this.deathWarrant = false;
 
 
 }
@@ -135,17 +138,49 @@ Swarm.prototype.purgeYouth = function(){
 }
 
 Swarm.prototype.killAll = function(){
-    this.insects = [];
+    while(this.liveInsectCount() >= 0){
+        this.sacrificeMember();
+    }
+
 }
 
-Swarm.prototype.addMember = function(){
-    this.insects.push(new Insect(0,0,0,0,this.centroids[0]));
+Swarm.prototype.addMember = function(loc){
+    if(loc instanceof Array){
+        this.insects.push(new Insect(loc[0],loc[1],0,0,[0,0]));
+    }
+    else{
+        this.insects.push(new Insect(0,0,0,0,this.centroids[0]));
+    }
 }
 
 Swarm.prototype.sacrificeMember = function(){
-    this.insects.pop();
+
+    var index = this.insects.length - 1;
+    while( index > 0 && this.insects[index].deathWarrant){
+        index --;
+    }
+    this.insects[index].gravity = 0;
+    this.insects[index].randomness = 5;
+
+    this.insects[index].deathWarrant = true;
+    swarm = this;
+    setTimeout(function(){
+        swarm.insects.splice(index,1);
+    },800);
 }
 
+Swarm.prototype.liveInsectCount = function(){
+    if(this.insects.length > 0){
+        var index = this.insects.length - 1
+        while(this.insects[index].deathWarrant){
+            index --
+        }
+        return index;
+    }
+    else{
+        return 0;
+    }
+}
 
 Swarm.prototype.nextIteration = function(cursorX,cursorY){
     swarm = this;
@@ -185,7 +220,6 @@ Swarm.prototype.nextIteration = function(cursorX,cursorY){
 
         if (swarm.currentMode == SWARM_DYNAMIC_CENTROIDS && swarm.centroids) {
             insect.centroid = [10000,10000];
-
             for(k =0; k < swarm.centroids.length; k++){
                 da1 = insect.xloc - insect.centroid[0];
                 da2 = insect.yloc - insect.centroid[1];
@@ -214,14 +248,18 @@ Swarm.prototype.nextIteration = function(cursorX,cursorY){
 
         insect.xloc += insect.xvel;
         insect.yloc += insect.yvel;
-
-        if(mag < swarm.maxPerturbDistance){
-            insect.xvel += (1 + (0.1/mag)) * swarm.randomness * (swarm.probabilityFunction() - 0.5) - swarm.friction * insect.xvel - mag * swarm.gravity * (insect.xloc - insect.centroid[0]) + (dx / (mag * mag)) * swarm.frightfulness;
-            insect.yvel += (1 + (0.1/mag)) * swarm.randomness * (swarm.probabilityFunction() - 0.5) - swarm.friction * insect.yvel - mag * swarm.gravity * (insect.yloc - insect.centroid[1]) + (dy / (mag * mag)) * swarm.frightfulness;
+        if(!insect.deathWarrant){
+            if(mag < swarm.maxPerturbDistance){
+                insect.xvel += (1 + (0.1/mag)) * insect.randomness * swarm.randomness * (swarm.probabilityFunction() - 0.5) - swarm.friction * insect.xvel - mag * swarm.gravity * insect.gravity * (insect.xloc - insect.centroid[0]) + (dx / (mag * mag)) * swarm.frightfulness;
+                insect.yvel += (1 + (0.1/mag)) * insect.randomness * swarm.randomness * (swarm.probabilityFunction() - 0.5) - swarm.friction * insect.yvel - mag * swarm.gravity * insect.gravity * (insect.yloc - insect.centroid[1]) + (dy / (mag * mag)) * swarm.frightfulness;
+            }
+            insect.xvel += insect.randomness * swarm.randomness * (swarm.probabilityFunction() - 0.5) - swarm.friction * insect.xvel - (swarm.gravity * insect.gravity) * (insect.xloc-insect.centroid[0]);
+            insect.yvel += insect.randomness * swarm.randomness * (swarm.probabilityFunction() - 0.5) - swarm.friction * insect.yvel - (swarm.gravity * insect.gravity) * (insect.yloc-insect.centroid[1]);
         }
-        insect.xvel += swarm.randomness * (swarm.probabilityFunction() - 0.5) - swarm.friction * insect.xvel - (swarm.gravity) * (insect.xloc-insect.centroid[0]);
-        insect.yvel += swarm.randomness * (swarm.probabilityFunction() - 0.5) - swarm.friction * insect.yvel - (swarm.gravity) * (insect.yloc-insect.centroid[1]);
-
+        else{
+            insect.xvel *= 0.999// insect.xvel;
+            insect.yvel += 0.0008;
+        }
 
         if(swarm.renderType == SWARM_RENDERTYPE_POINT){
 
@@ -268,7 +306,6 @@ Swarm.prototype.setToSelectionMode = function(){
 Swarm.prototype.equalize = function(){
    counter = 0;
     var swarm = this;
-    swarm.currentMode = SWARM_UNIFORM_ASSIGNMENT;
     swarm.centroids.sort();
     swarm.insects.forEach(function(insect){
         insect.centroid = swarm.centroids[counter%swarm.centroids.length];
