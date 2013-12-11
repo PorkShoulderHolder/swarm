@@ -116,13 +116,14 @@ var Swarm = function(context,centroids,insects,gravity,friction,randomness,frigh
         }
         console.log("generated agents");
     }
-    x = d3.scale.linear()
-            .domain([0, 1])
-            .range([0, this.context.canvas.width]);
+    x = function(x0){
+        return x0 * this.context.canvas.width;
+    }
 
-    y = d3.scale.linear()
-        .domain([0, 1])
-        .range([0, this.context.canvas.height]);
+    y = function(y0){
+        return y0 * this.context.canvas.height;
+    }
+
 }
 
 Swarm.prototype.spawnYouth = function(){
