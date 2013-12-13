@@ -1,9 +1,4 @@
 /**
-     * Created with PyCharm.
-     * User: Sam
-     * Date: 9/26/13
-     * Time: 10:49 PM
-
         Permission is hereby granted, free of charge, to any person obtaining a copy
     of this software and associated documentation files (the "Software"), to deal
     in the Software without restriction, including without limitation the rights
@@ -14,7 +9,7 @@
     The above copyright notice and this permission notice shall be included in
     all copies or substantial portions of the Software.
 
-    Copyright (c) <2013> <Sam F. Royston>
+    Copyright (c) 2013 Sam F. Royston
 
     THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
     IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
