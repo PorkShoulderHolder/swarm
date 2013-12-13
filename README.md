@@ -18,18 +18,25 @@ The constructor must take a canvas context as the argument. This will produce a 
 
     var swarm = new Swarm(context);
 
-In order to render it, you need to set up an animation loop, this can be done with something like setInterval(), or d3.timer(). This has been left exposed so that you can
+In order to render it, you need to set up an animation loop, this can be done with something like requestAnimationFrame(), setInterval(), or d3.timer(). This has been left exposed so that you can
 synchronize your animation between multiple swarms or other drawing operations.
 
-    setInterval(function(){
+    var animate = function(){
         swarm.nextIteration(cursorX,cursorY);
-    }, 40)
+        requestAnimationFrame(animate);
+    }
+
+    animate();
+
 
 If you don't care about interacting with the cursor, just pass in a large number as if the cursor was very far away:
 
-    setInterval(function(){
+    var animate = function(){
         swarm.nextIteration(10000,10000);
-    }, 40)
+        requestAnimationFrame(animate);
+    }
+
+    animate();
 
 
 Try messing with the physical parameters (gravity, friction, randomness) of the swarm to see understand the effects; generally choose values that are positive and within [0,1].
