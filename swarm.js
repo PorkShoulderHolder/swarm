@@ -31,13 +31,14 @@ var SWARM_UNIFORM_ASSIGNMENT = 4;
 var SWARM_DYNAMIC_CENTROIDS_RANSAC = 5;
 
 
- x = function(x0){
-        return x0 * this.context.canvas.width;
-    }
+x = function(x0){
+    return x0 * this.context.canvas.width;
+}
 
-    y = function(y0){
-        return y0 * this.context.canvas.height;
-    }
+y = function(y0){
+    return y0 * this.context.canvas.height;
+}
+
 var Insect = function(xloc,yloc,xvel,yvel,centroid){
 
     this.xloc = xloc;
@@ -208,6 +209,8 @@ Swarm.prototype.liveInsectCount = function(){
 }
 
 Swarm.prototype.nextIteration = function(cursorX,cursorY){
+
+    this.context.lineWidth = this.bugSize;
     swarm = this;
 
     if (this.currentMode == 'normal_mode' && cursorX != NaN && cursorY != NaN){
