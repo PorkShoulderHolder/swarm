@@ -25,7 +25,6 @@ var x,y;
 var SWARM_RENDERTYPE_POINT = 1;
 var SWARM_RENDERTYPE_MANUALRENDER
 
-var SWARM_RENDERTYPE_LINE = 2;
 var SWARM_DYNAMIC_CENTROIDS = 3;
 var SWARM_UNIFORM_ASSIGNMENT = 4;
 var SWARM_DYNAMIC_CENTROIDS_RANSAC = 5;
@@ -38,6 +37,15 @@ x = function(x0){
 y = function(y0){
     return y0 * this.context.canvas.height;
 }
+
+var SWARM_RENDERTYPE_POINT = function(insect,prevPoint, context){
+    swarm.context.fillRect(x(insect.xloc),y(insect.yloc),2,2);
+};
+
+var SWARM_RENDERTYPE_LINE = function(insect,prevPoint,context){
+    context.moveTo(prevPoint[0],prevPoint[1]);
+    context.lineTo(x(insect.xloc),y(insect.yloc));
+};
 
 var Insect = function(xloc,yloc,xvel,yvel,centroid){
 
@@ -94,6 +102,8 @@ var Swarm = function(context,centroids,insects,gravity,friction,randomness,frigh
     this.maxPerturbation = 0.7;
     /** rendered as line by default **/
     this.renderType = SWARM_RENDERTYPE_LINE;
+
+    this.renderFunction = SWARM_RENDERTYPE_LINE;
 
     if(centroids){
         console.log(centroids[0]);
@@ -293,14 +303,8 @@ Swarm.prototype.nextIteration = function(cursorX,cursorY){
             insect.yvel += 0.0008;
         }
 
-        if(swarm.renderType == SWARM_RENDERTYPE_POINT){
+        swarm.renderFunction(insect,prevPoint,swarm.context)
 
-            swarm.context.fillRect(x(insect.xloc),y(insect.yloc),2,2);
-        }
-        else if(swarm.renderType == SWARM_RENDERTYPE_LINE){
-            swarm.context.moveTo(prevPoint[0],prevPoint[1]);
-            swarm.context.lineTo(x(insect.xloc),y(insect.yloc));
-        }
         counter ++;
 
         insect.children.forEach(function(babe){
