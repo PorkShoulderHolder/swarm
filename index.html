@@ -19,64 +19,7 @@
         z-index:0;
     }
 
-    #links{
-
-        width:280px;
-        height:200px;
-        font-family:Ubuntu Mono;
-        float: right;
-        font-size: 40px;;
-        z-index:1;
-    }
-
-    a.music
-    {
-        color:black;
-        position: relative;
-        text-decoration:none;
-        top: 0px;
-        z-index:2;
-    }
-    a.about
-    {color:black;
-        position: relative;
-        text-decoration:none;
-        top: 20px;
-        z-index:2;
-    }
-    a.software
-    {
-        color:black;
-        position: relative;
-        text-decoration:none;
-        top: 40px;
-        z-index:2;
-    }
-    a.showcase
-    {
-        color:black;
-        position: relative;
-        text-decoration:none;
-        top: 60px;
-        z-index:2;
-    }
-    a.music:hover{
-        color:grey;
-        cursor: crosshair;
-    }
-    a.about:hover{
-        color:grey;
-        cursor: crosshair;
-    }
-    a.software:hover{
-        color:grey;
-        cursor: crosshair;
-    }
-    a.showcase:hover{
-        color:grey;
-        cursor: crosshair;
-    }
-
+   
 </style>
 <canvas id="videoCanvas">
 </canvas>
@@ -128,75 +71,6 @@ var mouseActive =true;
 /////////////////////////////////////////buttons//////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////
 //////music
-musicButt = document.getElementById("music");
-musicButt.onmouseover = function() {
-    highlightSwarm.centroids[0] = [(findPositionX(musicButt)/wid) - 0.015,(findPositionY(musicButt)/hei)+0.005];
-    highlightSwarm.setToSelectionMode();
-    selection = true;
-};
-musicButt.onclick = function(){
-    highlightSwarm.centroids[0] = mainSwarm.centroids[0];
-    highlightSwarm.setToNormal();
-    selection = false;
-}
-musicButt.onmouseout = function() {
-    highlightSwarm.centroids[0] = mainSwarm.centroids[0];
-    highlightSwarm.setToNormal();
-    selection = false;
-}
-//////software
-softwareButt = document.getElementById("software");
-softwareButt.onmouseover = function() {
-    highlightSwarm.centroids[0] = [(findPositionX(softwareButt)/wid) - 0.015,(findPositionY(softwareButt)/hei)+0.005];
-    highlightSwarm.setToSelectionMode();
-    selection = true;
-};
-softwareButt.onclick = function(){
-cent = mainSwarm.centroids;
-    highlightSwarm.centroids[0] = mainSwarm.centroids[0];
-    selection = false;
-}
-softwareButt.onmouseout = function() {
-    highlightSwarm.centroids[0] = mainSwarm.centroids[0];
-    highlightSwarm.setToNormal();
-    console.log("no sel");
-    selection = false;
-}
-//////about
-aboutButt = document.getElementById("about");
-aboutButt.onmouseover = function() {
-    highlightSwarm.centroids[0] = [(findPositionX(aboutButt)/wid) - 0.015,(findPositionY(aboutButt)/hei)+0.005];
-    highlightSwarm.setToSelectionMode();
-    selection = true;
-};
-aboutButt.onclick = function(){
-    highlightSwarm.centroids[0] = mainSwarm.centroids[0];
-    highlightSwarm.setToNormal();
-    selection = false;
-}
-aboutButt.onmouseout = function() {
-    highlightSwarm.centroids[0] = mainSwarm.centroids[0];
-    highlightSwarm.setToNormal();
-    console.log("no sel");
-    selection = false;
-}
-showcaseButt = document.getElementById("showcase");
-showcaseButt.onmouseover = function() {
-    highlightSwarm.centroids[0] = [(findPositionX(showcaseButt)/wid) - 0.015,(findPositionY(showcaseButt)/hei)+0.005];
-    highlightSwarm.setToSelectionMode();
-    console.log(highlightSwarm);
-    selection = true;
-};
-showcaseButt.onclick = function(){
-
-    window.location = 'http://' + location.host+ '/downloadResume';
-}
-showcaseButt.onmouseout = function() {
-    highlightSwarm.centroids[0] = mainSwarm.centroids[0];
-    highlightSwarm.setToNormal();
-    console.log("no sel");
-    selection = false;
-}
 
 var x = d3.scale.linear()
         .domain([0, 1])
