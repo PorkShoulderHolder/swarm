@@ -31,11 +31,8 @@
 
 <script src="http://d3js.org/d3.v2.min.js?2.9.1"></script>
 <script src="http://code.jquery.com/jquery-1.4.2.min.js"></script>
-<script type="text/javascript" src="../_videoCapture.js"></script>
 <script type="text/javascript" src="swarm.js"></script>
 <script>
-
-//var videoCapture = new VideoCapture();
 
 var object = document.getElementById('div5')
 
@@ -134,10 +131,6 @@ var music = d3.select("canvas").append("music");
 var context = canvas.node().getContext("2d");
 
 var mainSwarm = new Swarm(context,[[0.5,0.5]],data);
-
-
-
-
 
 var render2 = function(insect,prevPoint,context){
 
