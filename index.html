@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<title>Somatostatin the obvious</title>
+<link rel="shortcut icon" href="/images/favicon.ico" />
+<link rel="stylesheet" type="text/css" href="http://fonts.googleapis.com/css?family=Ubuntu+Mono">
+<style>
+
+    #canvas {
+        position: absolute;
+        top: 0;
+        top: 0;
+        z-index:1;
+    }
+    #videoCanvas {
+        visibility: hidden;
+        position: absolute;
+        left: 600;
+        top: 0;
+        z-index:0;
+    }
+
+    #links{
+
+        width:280px;
+        height:200px;
+        font-family:Ubuntu Mono;
+        float: right;
+        font-size: 40px;;
+        z-index:1;
+    }
+
+    a.music
+    {
+        color:black;
+        position: relative;
+        text-decoration:none;
+        top: 0px;
+        z-index:2;
+    }
+    a.about
+    {color:black;
+        position: relative;
+        text-decoration:none;
+        top: 20px;
+        z-index:2;
+    }
+    a.software
+    {
+        color:black;
+        position: relative;
+        text-decoration:none;
+        top: 40px;
+        z-index:2;
+    }
+    a.showcase
+    {
+        color:black;
+        position: relative;
+        text-decoration:none;
+        top: 60px;
+        z-index:2;
+    }
+    a.music:hover{
+        color:grey;
+        cursor: crosshair;
+    }
+    a.about:hover{
+        color:grey;
+        cursor: crosshair;
+    }
+    a.software:hover{
+        color:grey;
+        cursor: crosshair;
+    }
+    a.showcase:hover{
+        color:grey;
+        cursor: crosshair;
+    }
+
+</style>
+<canvas id="videoCanvas">
+</canvas>
+<canvas id="canvas">
+</canvas>
+<div style="position: absolute; top: 50px; left: 600px; display:none">
+    <video id = 'video' autoplay></video>
+</div>
+<div id = 'links'>
+
+    <ul>
+        <a class='music' id='music' href="/music">Music</a>
+    </ul>
+    <ul>
+        <a class='about' id='about' href="/about">About</a>
+    </ul>
+    <ul>
+        <a class='software' id='software' href="/projects">Projects</a>
+    </ul>
+    <ul>
+        <a class='showcase' id='showcase'>Resumé</a>
+    </ul>
+
+</div>
+<script src="http://d3js.org/d3.v2.min.js?2.9.1"></script>
+<script src="http://code.jquery.com/jquery-1.4.2.min.js"></script>
+<script type="text/javascript" src="../_videoCapture.js"></script>
+<script type="text/javascript" src="swarm.js"></script>
+<script>
+
+//var videoCapture = new VideoCapture();
+
+var object = document.getElementById('div5')
+
+var data = d3.range(400).map(function() {
+    bee = new Insect(Math.random()*0.2 + 0.4,Math.random()*0.2 + 0.4,0,0,[0,0])
+    bee.color = "rgba(" + Math.floor(Math.random()*256) + "," +  Math.floor(Math.random()*256) + "," +  Math.floor(Math.random()*256) + ",0.2)";
+   bee.color2 = "rgba(" + Math.floor(Math.random()*256) + "," +  Math.floor(Math.random()*256) + "," +  Math.floor(Math.random()*256) + ",0.0)";
+   // bee.color = "rgba(0,0,0,0.2)";
+   // bee.color2 = "rgba(255,255,255,0.0)";
+    return bee;
+});
+
+var selection = false;
+var currentMode = 'normal_mode';
+
+var highlightData = d3.range(0).map(function(){
+    bee = new Insect(Math.random()*0.2 + 0.4,Math.random()*0.2 + 0.4,0,0,[0,0])
+        bee.color = "rgba(" + Math.floor(Math.random()*256) + "," +  Math.floor(Math.random()*256) + "," +  Math.floor(Math.random()*256) + ",0.2)";
+
+    return bee;
+});
+
+var wid = window.innerWidth,
+    hei = window.innerHeight,
+    angle = 2 * Math.PI;
+var cursorX = 0;
+var cursorY = 0;
+var mouseActive =true;
+
+
+
+//////////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////buttons//////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////
+//////music
+musicButt = document.getElementById("music");
+musicButt.onmouseover = function() {
+    highlightSwarm.centroids[0] = [(findPositionX(musicButt)/wid) - 0.015,(findPositionY(musicButt)/hei)+0.005];
+    highlightSwarm.setToSelectionMode();
+    selection = true;
+};
+musicButt.onclick = function(){
+    highlightSwarm.centroids[0] = mainSwarm.centroids[0];
+    highlightSwarm.setToNormal();
+    selection = false;
+}
+musicButt.onmouseout = function() {
+    highlightSwarm.centroids[0] = mainSwarm.centroids[0];
+    highlightSwarm.setToNormal();
+    selection = false;
+}
+//////software
+softwareButt = document.getElementById("software");
+softwareButt.onmouseover = function() {
+    highlightSwarm.centroids[0] = [(findPositionX(softwareButt)/wid) - 0.015,(findPositionY(softwareButt)/hei)+0.005];
+    highlightSwarm.setToSelectionMode();
+    selection = true;
+};
+softwareButt.onclick = function(){
+cent = mainSwarm.centroids;
+    highlightSwarm.centroids[0] = mainSwarm.centroids[0];
+    selection = false;
+}
+softwareButt.onmouseout = function() {
+    highlightSwarm.centroids[0] = mainSwarm.centroids[0];
+    highlightSwarm.setToNormal();
+    console.log("no sel");
+    selection = false;
+}
+//////about
+aboutButt = document.getElementById("about");
+aboutButt.onmouseover = function() {
+    highlightSwarm.centroids[0] = [(findPositionX(aboutButt)/wid) - 0.015,(findPositionY(aboutButt)/hei)+0.005];
+    highlightSwarm.setToSelectionMode();
+    selection = true;
+};
+aboutButt.onclick = function(){
+    highlightSwarm.centroids[0] = mainSwarm.centroids[0];
+    highlightSwarm.setToNormal();
+    selection = false;
+}
+aboutButt.onmouseout = function() {
+    highlightSwarm.centroids[0] = mainSwarm.centroids[0];
+    highlightSwarm.setToNormal();
+    console.log("no sel");
+    selection = false;
+}
+showcaseButt = document.getElementById("showcase");
+showcaseButt.onmouseover = function() {
+    highlightSwarm.centroids[0] = [(findPositionX(showcaseButt)/wid) - 0.015,(findPositionY(showcaseButt)/hei)+0.005];
+    highlightSwarm.setToSelectionMode();
+    console.log(highlightSwarm);
+    selection = true;
+};
+showcaseButt.onclick = function(){
+
+    window.location = 'http://' + location.host+ '/downloadResume';
+}
+showcaseButt.onmouseout = function() {
+    highlightSwarm.centroids[0] = mainSwarm.centroids[0];
+    highlightSwarm.setToNormal();
+    console.log("no sel");
+    selection = false;
+}
+
+var x = d3.scale.linear()
+        .domain([0, 1])
+        .range([0, wid]);
+
+var y = d3.scale.linear()
+        .domain([0, 1])
+        .range([0, hei]);
+
+var time0 = Date.now(),
+        time1;
+var counter = 0;
+
+var fpsX = d3.select("#music span");
+var fpsY = d3.select("#fpsY span");
+var cursorXspot = d3.select("#cursorX span");
+var cursorYspot = d3.select("#cursorY span");
+
+var swarmCenter = [0.9,0.2,0.0];
+var swarmCenter1 = [0.1,0.1];
+points = [[0.0,0.0,0.0],[0.0,0.0,0.0],[0.0,0.0,0.0],[0.0,0.0,0.0],[0.0,0.0,0.0],[0.0,0.0,0.0],[0.0,0.0,0.0],[0.0,0.0,0.0],[0.0,0.0,0.0],[0.0,0.0,0.0],[0.0,0.0,0.0],[0.0,0.0,0.0]];
+
+var currentCenter  = [0.5,0.5,0.0];
+var prevIndex = [-1];
+var highlightSwarmCenter = [0.5,0.5];
+var unitv = [0,0];
+var canvas = d3.select("#canvas")
+        .attr("width", wid)
+        .attr("height", hei)
+        .on("mousemove", function() {
+
+            if(mouseActive){
+                if(cursorX - d3.mouse(this)[0]/wid == 0 && cursorY - d3.mouse(this)[1]/hei == 0){
+                    mainSwarm.frightfulness = 0;
+                    highlightSwarm.frightfulness =0;
+                }
+                else if(selection == false){
+                    mainSwarm.currentMode == 'normal_mode' ? mainSwarm.setToNormal() : mainSwarm.setToCameraCapture();
+                    highlightSwarm.currentMode == 'normal_mode' ? highlightSwarm.setToNormal() : highlightSwarm.setToCameraCapture();
+                }
+                else{
+                    mainSwarm.currentMode == 'normal_mode' ? mainSwarm.setToNormal() : mainSwarm.setToCameraCapture();
+                }
+                cursorX = d3.mouse(this)[0]/wid;
+                cursorY = d3.mouse(this)[1]/hei;
+
+            }
+            else{
+                //set cursor var to be too far to have any effect
+                cursorX = cursorY = 100;
+            }
+        })
+
+
+d3.select("canvas").append("a")
+        .attr("class","music")
+        .attr("xlink:href", "http://soundcloud.com/")
+        .append("rect");
+
+var music = d3.select("canvas").append("music");
+var context = canvas.node().getContext("2d");
+
+var mainSwarm = new Swarm(context,[[0.5,0.5]],data);
+
+
+
+
+
+var render2 = function(insect,prevPoint,context){
+
+    grad = context.createRadialGradient(x(insect.xloc),y(insect.yloc),1,x(insect.xloc),y(insect.yloc),400);
+
+    grad.addColorStop(0,insect.color);
+    grad.addColorStop(1,"rgba(255, 255, 255, 0.0)");
+    context.fillStyle = grad;
+    context.fillRect(x(insect.xloc) - 400,y(insect.yloc) - 400,800,800);
+};
+
+var render = function(insect,prevPoint,context){
+
+    grad = context.createRadialGradient(x(insect.xloc),y(insect.yloc),1,x(insect.xloc),y(insect.yloc),70);
+
+    grad.addColorStop(0,insect.color);
+    grad.addColorStop(1,insect.color2);
+    context.fillStyle = grad;
+    context.fillRect(x(insect.xloc) - 150,y(insect.yloc) - 150,300,300);
+};
+mainSwarm.renderType = render;
+mainSwarm.renderFunction = render;
+
+
+var highlightSwarm  = new Swarm(context,[[0.5,0.5]],highlightData);
+highlightSwarm.setToNormal();
+//
+//highlightSwarm.renderType = render2;
+//highlightSwarm.renderFunction = render2;
+
+
+context.lineWidth=1;
+context.strokeWidth = 1.9;
+
+context.fillStyle = "black";
+
+var svg = d3.select("canvas")
+        .append("svg")
+        .attr("width", wid)
+        .attr("height", hei)
+        .attr("class", "PiYG")
+        .on("mousemove", function() {
+            var m = d3.mouse(this);
+            mouse[0] = m[0];
+            mouse[1] = m[1];
+        })
+
+
+
+var t = 0
+ if( /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ) {
+         $('#links').css('font-size','160px').css('width','80%').css('height','70%').css('margin-right','150px');
+     }
+
+$(document).ready(function(){
+
+})
+var requestAnimationFrame =
+        window.requestAnimationFrame ||       // According to the standard
+        window.mozRequestAnimationFrame ||    // For mozilla
+        window.webkitRequestAnimationFrame || // For webkit
+        window.msRequestAnimationFrame ||     // For ie
+        function (f) { window.setTimeout(function () { f(Date.now()); }, 1000/60); }; // If everthing else fails
+
+var cancelAnimationFrame =
+        window.cancelAnimationFrame ||
+        window.mozCancelAnimationFrame ||
+        window.webkitCancelAnimationFrame ||
+        window.msCancelAnimationFrame;
+
+///////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////ANIMATION TIMER////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////////
+
+animate = function()
+{
+    context.fillStyle = "rgba(255, 255, 255, 0.5)";
+    context.fillRect(0,0,window.innerWidth,$(document).scrollTop() + window.innerHeight);
+    context.fillStyle = "rgba(0, 0, 0, 1)";
+    counter = counter +1;
+    if(!selection){
+        highlightSwarmCenter = swarmCenter;
+    }
+
+    if(mainSwarm.currentMode == SWARM_DYNAMIC_CENTROIDS){
+        highlightSwarm.centroids = bitmap;
+        mainSwarm.centroids = bitmap;
+
+    }
+
+    highlightSwarm.nextIteration(cursorX,cursorY);
+    mainSwarm.nextIteration(cursorX,cursorY);
+    mainSwarm.setToExcited();
+    mainSwarm.gravity /=10;
+    mainSwarm.friction *= 6
+    time1 = Date.now();
+    time0 = time1;
+    requestAnimationFrame(animate);
+
+};
+animate();
+function transferToCamera(){
+    mainSwarm.setToCameraCapture();
+    mainSwarm.currentMode = SWARM_DYNAMIC_CENTROIDS;
+    highlightSwarm.setToCameraCapture();
+    highlightSwarm.currentMode = SWARM_DYNAMIC_CENTROIDS;
+    highlightSwarm.centroids = bitmap;
+    mainSwarm.centroids = bitmap;
+}
+
+function transferToNormal(){
+    mainSwarm.setToNormal();
+    mainSwarm.currentMode = 'normal_mode';
+    highlightSwarm.setToNormal();
+    highlightSwarm.currentMode = 'normal_mode';
+    highlightSwarm.centroids = [[0.5,0.5]];
+    mainSwarm.centroids = [[0.5,0.5]];
+}
+
+function findPositionX(obj)
+{
+    var left = 0;
+    if(obj.offsetParent)
+    {
+        while(1)
+        {
+            left += obj.offsetLeft;
+            if(!obj.offsetParent)
+                break;
+            obj = obj.offsetParent;
+        }
+    }
+    else if(obj.x)
+    {
+        left += obj.x;
+    }
+    return left;
+}
+
+//Find Y position of HTML control
+
+function findPositionY(obj)
+{
+    var top = 0;
+    if(obj.offsetParent)
+    {
+        while(1)
+        {
+            top += obj.offsetTop;
+            if(!obj.offsetParent)
+                break;
+            obj = obj.offsetParent;
+        }
+    }
+    else if(obj.y)
+    {
+        top += obj.y;
+    }
+    return top;
+}
+function httpGet(theUrl)
+    {
+        var xmlHttp = null;
+        $('#links').css('font-size','200px');
+        xmlHttp = new XMLHttpRequest();
+        xmlHttp.open( "GET", theUrl, false );
+        xmlHttp.send( null );
+    }
+
+</script>
+
