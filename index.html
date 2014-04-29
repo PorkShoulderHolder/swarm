@@ -29,19 +29,20 @@
     <video id = 'video' autoplay></video>
 </div>
 
-<script src="http://d3js.org/d3.v2.min.js?2.9.1"></script>
-<script src="http://code.jquery.com/jquery-1.4.2.min.js"></script>
+<script src="d3.min.js" charset="utf-8"></script>
+<script src="http://code.jquery.com/jquery-1.11.0.min.js"></script>
+<script src="http://code.jquery.com/jquery-migrate-1.2.1.min.js"></script>
 <script type="text/javascript" src="swarm.js"></script>
 <script>
 
 var object = document.getElementById('div5')
 
-var data = d3.range(400).map(function() {
+var data = d3.range(160).map(function() {
     bee = new Insect(Math.random()*0.2 + 0.4,Math.random()*0.2 + 0.4,0,0,[0,0])
     bee.color = "rgba(" + Math.floor(Math.random()*256) + "," +  Math.floor(Math.random()*256) + "," +  Math.floor(Math.random()*256) + ",0.2)";
    bee.color2 = "rgba(" + Math.floor(Math.random()*256) + "," +  Math.floor(Math.random()*256) + "," +  Math.floor(Math.random()*256) + ",0.0)";
    // bee.color = "rgba(0,0,0,0.2)";
-   // bee.color2 = "rgba(255,255,255,0.0)";
+    bee.color2 = "rgba(255,255,255,0.0)";
     return bee;
 });
 
@@ -93,17 +94,7 @@ var canvas = d3.select("#canvas")
         .on("mousemove", function() {
 
             if(mouseActive){
-                if(cursorX - d3.mouse(this)[0]/wid == 0 && cursorY - d3.mouse(this)[1]/hei == 0){
-                    mainSwarm.frightfulness = 0;
-                    highlightSwarm.frightfulness =0;
-                }
-                else if(selection == false){
-                    mainSwarm.currentMode == 'normal_mode' ? mainSwarm.setToNormal() : mainSwarm.setToCameraCapture();
-                    highlightSwarm.currentMode == 'normal_mode' ? highlightSwarm.setToNormal() : highlightSwarm.setToCameraCapture();
-                }
-                else{
-                    mainSwarm.currentMode == 'normal_mode' ? mainSwarm.setToNormal() : mainSwarm.setToCameraCapture();
-                }
+
                 cursorX = d3.mouse(this)[0]/wid;
                 cursorY = d3.mouse(this)[1]/hei;
 
@@ -137,7 +128,7 @@ var render2 = function(insect,prevPoint,context){
 
 var render = function(insect,prevPoint,context){
 
-    grad = context.createRadialGradient(x(insect.xloc),y(insect.yloc),1,x(insect.xloc),y(insect.yloc),70);
+    grad = context.createRadialGradient(x(insect.xloc),y(insect.yloc),1,x(insect.xloc),y(insect.yloc),130);
 
     grad.addColorStop(0,insect.color);
     grad.addColorStop(1,insect.color2);
@@ -216,9 +207,9 @@ animate = function()
 
     highlightSwarm.nextIteration(cursorX,cursorY);
     mainSwarm.nextIteration(cursorX,cursorY);
-    mainSwarm.setToExcited();
-    mainSwarm.gravity /=10;
-    mainSwarm.friction *= 6
+    //mainSwarm.setToExcited();
+    //mainSwarm.gravity /=10;
+    //mainSwarm.friction /= 6
     time1 = Date.now();
     time0 = time1;
     requestAnimationFrame(animate);
