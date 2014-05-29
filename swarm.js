@@ -22,24 +22,15 @@
 
 var x,y;
 
-var SWARM_RENDERTYPE_POINT = 1;
-var SWARM_RENDERTYPE_MANUALRENDER
 
 var SWARM_DYNAMIC_CENTROIDS = 3;
 var SWARM_UNIFORM_ASSIGNMENT = 4;
 var SWARM_DYNAMIC_CENTROIDS_RANSAC = 5;
 
 
-x = function(x0){
-    return x0 * this.context.canvas.width;
-}
 
-y = function(y0){
-    return y0 * this.context.canvas.height;
-}
-
-var SWARM_RENDERTYPE_POINT = function(insect,prevPoint, context){
-    swarm.context.fillRect(x(insect.xloc),y(insect.yloc),2,2);
+var SWARM_RENDERTYPE_POINT = function(insect, prevPoint, context){
+    context.fillRect(x(insect.xloc),y(insect.yloc),5,5);
 };
 
 var SWARM_RENDERTYPE_LINE = function(insect,prevPoint,context){
@@ -61,8 +52,8 @@ var Insect = function(xloc,yloc,xvel,yvel,centroid){
 }
 
 Insect.prototype.findNewCentroidRansac = function(centroids, checkThresh, acceptanceThresh, attempts){
-      da1 = this.xloc - this.centroid[0];
-      da2 = this.yloc - this.centroid[1];
+     da1 = this.xloc - this.centroid[0];
+     da2 = this.yloc - this.centroid[1];
      var index = centroids.indexOf(this.centroid);
      if(index > -1)centroids.splice(index,1);
      if(!checkThresh)checkThresh = 0.01;
@@ -82,8 +73,8 @@ Insect.prototype.findNewCentroidRansac = function(centroids, checkThresh, accept
             if(attempts != 0){
                 this.centroid = centroid;
             }
-      }
-}
+     }
+};
 
 Insect.prototype.spawnYouth = function(){
     this.children.push(new Insect(this.xloc,this.yloc,this.xvel,this.yvel,this.centroid));
@@ -93,17 +84,29 @@ Insect.prototype.purgeYouth = function(){
     this.children = [];
 }
 
+Insect.prototype.probabilityFunction = function(){
+    return this.randomness;
+};
 
-var Swarm = function(context,centroids,insects,gravity,friction,randomness,frightfulness){
+
+function Swarm(context,centroids,insects,gravity,friction,randomness,frightfulness){
     var wid = context.canvas.width;
     var hei = context.canvas.height;
     this.state = [];
-    this.saveState();
     this.maxPerturbation = 0.7;
     /** rendered as line by default **/
     this.renderType = SWARM_RENDERTYPE_LINE;
-
     this.renderFunction = SWARM_RENDERTYPE_LINE;
+
+    swarm = this;
+    x = function(x0){
+    return x0 * swarm.context.canvas.width;
+    }
+
+    y = function(y0){
+        return y0 * swarm.context.canvas.height;
+    }
+
 
     if(centroids){
         console.log(centroids[0]);
@@ -123,27 +126,20 @@ var Swarm = function(context,centroids,insects,gravity,friction,randomness,frigh
         this.frightfulness = frightfulness;
     }
     this.gridbins = [];
-    for( var i = 0; i < 10; i++){
+    for( var k = 0; k < 10; k++){
         var square = [];
-        for( var i = 0; i < 10; i++){
+        for( var j = 0; j < 10; j++){
             square.push([]);
         }
         this.gridbins.push(square);
     }
 
-    this.probabilityFunction = function(){
-
-      //** default is uniform distribution **/
-
-      return Math.random();
-    };
-
-    this.gridbins.push
 
     this.context = context;
     this.bugSize = 2;
     this.maxPerturbDistance = 0.8;
     this.currentMode = "normal_mode";
+    this.saveState();
 
     if(insects){
         this.insects = insects;
@@ -157,21 +153,30 @@ var Swarm = function(context,centroids,insects,gravity,friction,randomness,frigh
         }
         console.log("generated agents");
     }
+};
 
-
-}
+Swarm.prototype.probabilityFunction = function(){
+    //** default is uniform distribution **/
+    return this.randomness * (Math.random() - 0.5);
+};
+Swarm.prototype.frictionFunction = function(){
+    return this.friction;
+};
+Swarm.prototype.gravityFunction =  function(){
+    return this.gravity;
+};
 
 Swarm.prototype.spawnYouth = function(){
     this.insects.forEach(function(insect){
        insect.spawnYouth();
     });
-}
+};
 
 Swarm.prototype.purgeYouth = function(){
     this.insects.forEach(function(insect){
        insect.purgeYouth();
     });
-}
+};
 
 Swarm.prototype.killAll = function(){
     while(this.liveInsectCount() >= 0){
@@ -292,18 +297,18 @@ Swarm.prototype.nextIteration = function(cursorX,cursorY){
         insect.yloc += insect.yvel;
         if(!insect.deathWarrant){
             if(mag < swarm.maxPerturbDistance){
-                insect.xvel += (1 + (0.1/mag)) * insect.randomness * swarm.randomness * (swarm.probabilityFunction() - 0.5) - swarm.friction * insect.xvel - mag * swarm.gravity * insect.gravity * (insect.xloc - insect.centroid[0]) + (dx / (mag * mag)) * swarm.frightfulness;
-                insect.yvel += (1 + (0.1/mag)) * insect.randomness * swarm.randomness * (swarm.probabilityFunction() - 0.5) - swarm.friction * insect.yvel - mag * swarm.gravity * insect.gravity * (insect.yloc - insect.centroid[1]) + (dy / (mag * mag)) * swarm.frightfulness;
+                insect.xvel += (1 + (0.1/mag)) * insect.probabilityFunction() * swarm.probabilityFunction() - swarm.frictionFunction() * insect.xvel - mag * swarm.gravityFunction() * insect.gravity * (insect.xloc - insect.centroid[0]) + (dx / (mag * mag)) * swarm.frightfulness;
+                insect.yvel += (1 + (0.1/mag)) * insect.probabilityFunction() * swarm.probabilityFunction() - swarm.frictionFunction() * insect.yvel - mag * swarm.gravityFunction() * insect.gravity * (insect.yloc - insect.centroid[1]) + (dy / (mag * mag)) * swarm.frightfulness;
             }
-            insect.xvel += insect.randomness * swarm.randomness * (swarm.probabilityFunction() - 0.5) - swarm.friction * insect.xvel - (swarm.gravity * insect.gravity) * (insect.xloc-insect.centroid[0]);
-            insect.yvel += insect.randomness * swarm.randomness * (swarm.probabilityFunction() - 0.5) - swarm.friction * insect.yvel - (swarm.gravity * insect.gravity) * (insect.yloc-insect.centroid[1]);
+            insect.xvel += insect.probabilityFunction() * swarm.probabilityFunction() - swarm.frictionFunction() * insect.xvel - (swarm.gravityFunction() * insect.gravity) * (insect.xloc-insect.centroid[0]);
+            insect.yvel += insect.probabilityFunction() * swarm.probabilityFunction() - swarm.frictionFunction() * insect.yvel - (swarm.gravityFunction() * insect.gravity) * (insect.yloc-insect.centroid[1]);
         }
         else{
             insect.xvel *= 0.999;
             insect.yvel += 0.0008;
         }
 
-        swarm.renderFunction(insect,prevPoint,swarm.context)
+        swarm.renderFunction(insect,prevPoint,swarm.context);
 
         counter ++;
 
@@ -311,11 +316,10 @@ Swarm.prototype.nextIteration = function(cursorX,cursorY){
               babe.centroid = [insect.xloc,insect.yloc];
               babe.xloc += babe.xvel;
               babe.yloc += babe.yvel;
-              babe.xvel += swarm.randomness * ( swarm.probabilityFunction()- 0.5 ) - swarm.friction * babe.xvel - (swarm.gravity) * (babe.xloc - babe.centroid[0]);
-              babe.yvel += swarm.randomness * ( swarm.probabilityFunction() - 0.5 ) - swarm.friction * babe.yvel - (swarm.gravity) * (babe.yloc - babe.centroid[1]);
+              babe.xvel += swarm.probabilityFunction() - swarm.frictionFunction() * babe.xvel - (swarm.gravityFunction()) * (babe.xloc - babe.centroid[0]);
+              babe.yvel += swarm.probabilityFunction() - swarm.frictionFunction() * babe.yvel - (swarm.gravityFunction()) * (babe.yloc - babe.centroid[1]);
               swarm.context.fillRect(x(babe.xloc),y(babe.yloc),1,1);
         });
-
     });
     if(swarm.renderType == SWARM_RENDERTYPE_LINE){
         swarm.context.stroke();
@@ -361,6 +365,12 @@ Swarm.prototype.setToCameraCapture = function(){
     this.randomness = 0.0026;
     this.friction = 0.08;
     this.gravity = 0.05;
+}
+
+Swarm.prototype.setToRepulsion = function(){
+    this.gravity = 0;
+    this.friction = 0.6;
+    this.randomness = 0.18;
 }
 
 Swarm.prototype.setToWander = function(){
@@ -414,7 +424,6 @@ Swarm.prototype.reAssignToGrid = function(){
         insectTempCols.forEach(function(container){
 
             })
-
     }
 }
 
