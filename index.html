@@ -1,287 +1,139 @@
 <!DOCTYPE html>
-<meta charset="utf-8">
-<title>globules</title>
-<link rel="shortcut icon" href="/images/favicon.ico" />
-<link rel="stylesheet" type="text/css" href="http://fonts.googleapis.com/css?family=Ubuntu+Mono">
-<style>
+<html lang="en-us">
+  <head>
+    <meta charset="UTF-8">
+    <title>Swarm by PorkShoulderHolder</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" type="text/css" href="stylesheets/normalize.css" media="screen">
+    <link href='https://fonts.googleapis.com/css?family=Open+Sans:400,700' rel='stylesheet' type='text/css'>
+    <link rel="stylesheet" type="text/css" href="stylesheets/stylesheet.css" media="screen">
+    <link rel="stylesheet" type="text/css" href="stylesheets/github-light.css" media="screen">
+  </head>
+  <body>
+    <section class="page-header">
+      <h1 class="project-name">Swarm</h1>
+      <h2 class="project-tagline">A simple class to handle drawing &quot;swarms&quot; ~ brownian motion / orbiting particles ~ on an HTML canvas element.</h2>
+      <a href="https://github.com/PorkShoulderHolder/swarm" class="btn">View on GitHub</a>
+      <a href="https://github.com/PorkShoulderHolder/swarm/zipball/master" class="btn">Download .zip</a>
+      <a href="https://github.com/PorkShoulderHolder/swarm/tarball/master" class="btn">Download .tar.gz</a>
+    </section>
 
-    #canvas {
-        position: absolute;
-        top: 0;
-        top: 0;
-        z-index:1;
-    }
-    #videoCanvas {
-        visibility: hidden;
-        position: absolute;
-        left: 600;
-        top: 0;
-        z-index:0;
-    }
+    <section class="main-content">
+      <h1>
+<a id="swarmjs" class="anchor" href="#swarmjs" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>swarm.js</h1>
 
-   
-</style>
-<canvas id="videoCanvas">
-</canvas>
-<canvas id="canvas">
-</canvas>
-<div style="position: absolute; top: 50px; left: 600px; display:none">
-    <video id = 'video' autoplay></video>
-</div>
+<p>swarm.js is a tool for rendering swarm-like behaviour on an html canvas element. The system can be thought of as a set of particles subject to brownian motion
+with added consideration for momentum as well as gravity about a certain point, or set of points. The agents (i.e. insects/gnats) comprising each swarm are not aware of each other,
+but can be made aware of the cursor location. Their position should be manipulated by way of setting the gravitational center(s), this way they will maintain their
+organic looking motion.</p>
 
-<script src="d3.min.js" charset="utf-8"></script>
-<script src="jquery-1.11.0.min.js"></script>
-<script type="text/javascript" src="swarm.js"></script>
-<script>
+<p>Examples: <a href="http://somatostat.in/swarmSandbox.html">http://somatostat.in/swarmSandbox.html</a></p>
 
-var object = document.getElementById('div5')
+<h2>
+<a id="usage" class="anchor" href="#usage" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Usage</h2>
 
-var data = d3.range(160).map(function() {
-    bee = new Insect(Math.random()*0.2 + 0.4,Math.random()*0.2 + 0.4,0,0,[0,0])
-    bee.color = "rgba(" + Math.floor(Math.random()*256) + "," +  Math.floor(Math.random()*256) + "," +  Math.floor(Math.random()*256) + ",0.2)";
-   bee.color2 = "rgba(" + Math.floor(Math.random()*256) + "," +  Math.floor(Math.random()*256) + "," +  Math.floor(Math.random()*256) + ",0.0)";
-   // bee.color = "rgba(0,0,0,0.2)";
-    bee.color2 = "rgba(255,255,255,0.0)";
-    return bee;
-});
+<p>The constructor must take a canvas context as the argument. This will produce a swarm of 100 agents (insects, gnats, call them whatever you like), with default attributes.</p>
 
-var selection = false;
-var currentMode = 'normal_mode';
+<pre><code>var canvas = document.getElementById('canvas');
+var context = canvas.getContext('2d');
 
-var highlightData = d3.range(0).map(function(){
-    bee = new Insect(Math.random()*0.2 + 0.4,Math.random()*0.2 + 0.4,0,0,[0,0])
-        bee.color = "rgba(" + Math.floor(Math.random()*256) + "," +  Math.floor(Math.random()*256) + "," +  Math.floor(Math.random()*256) + ",0.2)";
+var swarm = new Swarm(context);
+</code></pre>
 
-    return bee;
-});
+<p>In order to render it, you need to set up an animation loop, this can be done with something like requestAnimationFrame(), setInterval(), or d3.timer(). This has been left exposed so that you can
+synchronize your animation between multiple swarms or other drawing operations.</p>
 
-var wid = window.innerWidth,
-    hei = window.innerHeight,
-    angle = 2 * Math.PI;
-var cursorX = 0;
-var cursorY = 0;
-var mouseActive =true;
-
-var x = d3.scale.linear()
-        .domain([0, 1])
-        .range([0, wid]);
-
-var y = d3.scale.linear()
-        .domain([0, 1])
-        .range([0, hei]);
-
-var time0 = Date.now(),
-        time1;
-var counter = 0;
-
-var fpsX = d3.select("#music span");
-var fpsY = d3.select("#fpsY span");
-var cursorXspot = d3.select("#cursorX span");
-var cursorYspot = d3.select("#cursorY span");
-
-var swarmCenter = [0.9,0.2,0.0];
-var swarmCenter1 = [0.1,0.1];
-points = [[0.0,0.0,0.0],[0.0,0.0,0.0],[0.0,0.0,0.0],[0.0,0.0,0.0],[0.0,0.0,0.0],[0.0,0.0,0.0],[0.0,0.0,0.0],[0.0,0.0,0.0],[0.0,0.0,0.0],[0.0,0.0,0.0],[0.0,0.0,0.0],[0.0,0.0,0.0]];
-
-var currentCenter  = [0.5,0.5,0.0];
-var prevIndex = [-1];
-var highlightSwarmCenter = [0.5,0.5];
-var unitv = [0,0];
-var canvas = d3.select("#canvas")
-        .attr("width", wid)
-        .attr("height", hei)
-        .on("mousemove", function() {
-
-            if(mouseActive){
-
-                cursorX = d3.mouse(this)[0]/wid;
-                cursorY = d3.mouse(this)[1]/hei;
-
-            }
-            else{
-                //set cursor var to be too far to have any effect
-                cursorX = cursorY = 100;
-            }
-        })
-
-
-d3.select("canvas").append("a")
-        .attr("class","music")
-        .attr("xlink:href", "http://soundcloud.com/")
-        .append("rect");
-
-var music = d3.select("canvas").append("music");
-var context = canvas.node().getContext("2d");
-
-var mainSwarm = new Swarm(context,[[0.5,0.5]],data);
-
-var render2 = function(insect,prevPoint,context){
-
-    grad = context.createRadialGradient(x(insect.xloc),y(insect.yloc),1,x(insect.xloc),y(insect.yloc),400);
-
-    grad.addColorStop(0,insect.color);
-    grad.addColorStop(1,"rgba(255, 255, 255, 0.0)");
-    context.fillStyle = grad;
-    context.fillRect(x(insect.xloc) - 400,y(insect.yloc) - 400,800,800);
-};
-
-var render = function(insect,prevPoint,context){
-
-    grad = context.createRadialGradient(x(insect.xloc),y(insect.yloc),1,x(insect.xloc),y(insect.yloc),130);
-
-    grad.addColorStop(0,insect.color);
-    grad.addColorStop(1,insect.color2);
-    context.fillStyle = grad;
-    context.fillRect(x(insect.xloc) - 150,y(insect.yloc) - 150,300,300);
-};
-mainSwarm.renderType = render;
-mainSwarm.renderFunction = render;
-
-
-var highlightSwarm  = new Swarm(context,[[0.5,0.5]],highlightData);
-highlightSwarm.setToNormal();
-//
-//highlightSwarm.renderType = render2;
-//highlightSwarm.renderFunction = render2;
-
-
-context.lineWidth=1;
-context.strokeWidth = 1.9;
-
-context.fillStyle = "black";
-
-var svg = d3.select("canvas")
-        .append("svg")
-        .attr("width", wid)
-        .attr("height", hei)
-        .attr("class", "PiYG")
-        .on("mousemove", function() {
-            var m = d3.mouse(this);
-            mouse[0] = m[0];
-            mouse[1] = m[1];
-        })
-
-
-
-var t = 0
- if( /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ) {
-         $('#links').css('font-size','160px').css('width','80%').css('height','70%').css('margin-right','150px');
-     }
-
-$(document).ready(function(){
-
-})
-var requestAnimationFrame =
-        window.requestAnimationFrame ||       // According to the standard
-        window.mozRequestAnimationFrame ||    // For mozilla
-        window.webkitRequestAnimationFrame || // For webkit
-        window.msRequestAnimationFrame ||     // For ie
-        function (f) { window.setTimeout(function () { f(Date.now()); }, 1000/60); }; // If everthing else fails
-
-var cancelAnimationFrame =
-        window.cancelAnimationFrame ||
-        window.mozCancelAnimationFrame ||
-        window.webkitCancelAnimationFrame ||
-        window.msCancelAnimationFrame;
-
-///////////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////ANIMATION TIMER////////////////////////////////////
-///////////////////////////////////////////////////////////////////////////////////////
-
-animate = function()
-{
-    context.fillStyle = "rgba(255, 255, 255, 0.5)";
-    context.fillRect(0,0,window.innerWidth,$(document).scrollTop() + window.innerHeight);
-    context.fillStyle = "rgba(0, 0, 0, 1)";
-    counter = counter +1;
-    if(!selection){
-        highlightSwarmCenter = swarmCenter;
-    }
-
-    if(mainSwarm.currentMode == SWARM_DYNAMIC_CENTROIDS){
-        highlightSwarm.centroids = bitmap;
-        mainSwarm.centroids = bitmap;
-
-    }
-
-    highlightSwarm.nextIteration(cursorX,cursorY);
-    mainSwarm.nextIteration(cursorX,cursorY);
-    //mainSwarm.setToExcited();
-    //mainSwarm.gravity /=10;
-    //mainSwarm.friction /= 6
-    time1 = Date.now();
-    time0 = time1;
+<pre><code>var animate = function(){
+    swarm.nextIteration(cursorX,cursorY);
     requestAnimationFrame(animate);
+}
 
-};
 animate();
-function transferToCamera(){
-    mainSwarm.setToCameraCapture();
-    mainSwarm.currentMode = SWARM_DYNAMIC_CENTROIDS;
-    highlightSwarm.setToCameraCapture();
-    highlightSwarm.currentMode = SWARM_DYNAMIC_CENTROIDS;
-    highlightSwarm.centroids = bitmap;
-    mainSwarm.centroids = bitmap;
+</code></pre>
+
+<p>If you don't care about interacting with the cursor, just pass in a large number as if the cursor was very far away:</p>
+
+<pre><code>var animate = function(){
+    swarm.nextIteration(10000,10000);
+    requestAnimationFrame(animate);
 }
 
-function transferToNormal(){
-    mainSwarm.setToNormal();
-    mainSwarm.currentMode = 'normal_mode';
-    highlightSwarm.setToNormal();
-    highlightSwarm.currentMode = 'normal_mode';
-    highlightSwarm.centroids = [[0.5,0.5]];
-    mainSwarm.centroids = [[0.5,0.5]];
+animate();
+</code></pre>
+
+<p>Try messing with the physical parameters (gravity, friction, randomness) of the swarm to see understand the effects; generally choose values that are positive and within [0,1].
+All values are normalized with respect to the context's size. So setting</p>
+
+<pre><code>swarm.centroids = [[0.5, 0.5]];
+</code></pre>
+
+<p>will cause the insects to be centered around the center of the screen.</p>
+
+<p>Depending on how you set the parameters, these guys can start to look a lot like a swarm of gnats!</p>
+
+<h2>
+<a id="advanced-usage" class="anchor" href="#advanced-usage" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Advanced Usage</h2>
+
+<p>The swarm is made of an array of 'insects', which are constructed like this</p>
+
+<pre><code>var Insect = function(xloc,yloc,xvel,yvel,centroid){
+
+    this.xloc = xloc;
+    this.yloc = yloc;
+    this.xvel = xvel;
+    this.yvel = yvel;
+    this.children = [];
+    this.centroid = centroid;
+
 }
+</code></pre>
 
-function findPositionX(obj)
-{
-    var left = 0;
-    if(obj.offsetParent)
-    {
-        while(1)
-        {
-            left += obj.offsetLeft;
-            if(!obj.offsetParent)
-                break;
-            obj = obj.offsetParent;
-        }
-    }
-    else if(obj.x)
-    {
-        left += obj.x;
-    }
-    return left;
-}
+<p>These are made by default, if not specified in the Swarm constructor.</p>
 
-//Find Y position of HTML control
+<p>We can manually remove and add two insects at a time with:</p>
 
-function findPositionY(obj)
-{
-    var top = 0;
-    if(obj.offsetParent)
-    {
-        while(1)
-        {
-            top += obj.offsetTop;
-            if(!obj.offsetParent)
-                break;
-            obj = obj.offsetParent;
-        }
-    }
-    else if(obj.y)
-    {
-        top += obj.y;
-    }
-    return top;
-}
-function httpGet(theUrl)
-    {
-        var xmlHttp = null;
-        $('#links').css('font-size','200px');
-        xmlHttp = new XMLHttpRequest();
-        xmlHttp.open( "GET", theUrl, false );
-        xmlHttp.send( null );
-    }
+<pre><code>swarm.addMember();
+swarm.sacrificeMember();
+</code></pre>
 
-</script>
+<p>Also we can make every agent have a 'child' that will follow them around, and correspondingly get rid of them:</p>
 
+<pre><code>swarm.spawnYouth();
+swarm.purgeYouth();
+</code></pre>
+
+<p>The 'centroids' property is an array. If you populate that array, the swarm can do some cool stuff based on the locations of the centroids.</p>
+
+<pre><code>swarm.centroids = [[0.3,0.3], [0.3,0.4], [0.3,0.5], [0.3,0.6],
+                   [0.3,0.7], [0.4,0.7], [0.5,0.7], [0.6,0.7],
+                   [0.7,0.7], [0.7,0.6], [0.7,0.5], [0.7,0.4],
+                   [0.7,0.3], [0.6,0.3], [0.5,0.3], [0.4,0.3]]
+</code></pre>
+
+<p>Above the centroids are set to the outline of a 5 x 5 square.</p>
+
+<pre><code>// spread the swarm evenly between the centroids
+
+swarm.equalize();
+
+//make each agent to continually calculate the nearest centroid and set that to be theirs:
+
+swarm.currentMode = SWARM_DYNAMIC_CENTROIDS;
+</code></pre>
+
+<p>Now the agents will migrate between the centroids if they are close enough.
+Dynamic centroid mode is computationally intensive, but it looks cool. A grid system is on the to-do list to help deal with this.</p>
+
+<p>That's it!</p>
+
+      <footer class="site-footer">
+        <span class="site-footer-owner"><a href="https://github.com/PorkShoulderHolder/swarm">Swarm</a> is maintained by <a href="https://github.com/PorkShoulderHolder">PorkShoulderHolder</a>.</span>
+
+        <span class="site-footer-credits">This page was generated by <a href="https://pages.github.com">GitHub Pages</a> using the <a href="https://github.com/jasonlong/cayman-theme">Cayman theme</a> by <a href="https://twitter.com/jasonlong">Jason Long</a>.</span>
+      </footer>
+
+    </section>
+
+  
+  </body>
+</html>
